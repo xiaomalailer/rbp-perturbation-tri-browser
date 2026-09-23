@@ -1,0 +1,66 @@
+gene	module	module_name	membership_strength	enzyme_type	modification_related	full_name
+ALKBH5	0	Noise	0.0	demethylase	m6A/m6Am (N6-methyladenosine)	RNA demethylase ALKBH5
+CMTR2	0	Noise	0.0	methyltransferase	RNA 5' cap/capping/decapping	Cap-specific mRNA (nucleoside-2'-O-)-methyltransferase 2
+DCPS	0	Noise	0.0	hydrolase	RNA 5' cap/capping/decapping	m7GpppX diphosphatase
+HNRNPA2B1	0	Noise	0.0		m6A/m6Am (N6-methyladenosine)	Heterogeneous nuclear ribonucleoproteins A2/B1
+LARP7	0	Noise	0.0		RNA 5' cap/capping/decapping	La-related protein 7
+METTL5	0	Noise	0.0	methyltransferase	m6A/m6Am (N6-methyladenosine)	rRNA N(6)-adenosine-methyltransferase METTL5
+MRM3	0	Noise	0.0	methyltransferase	2'-O-methylation (Nm)	rRNA methyltransferase 3, mitochondrial
+NPM1	0	Noise	0.0		RNA processing/modification-associated	Nucleophosmin
+OSGEP	0	Noise	0.0	endopeptidase	t6A/ms2t6A	tRNA N6-adenosine threonylcarbamoyltransferase
+PUS1	0	Noise	0.0	pseudouridine synthase	pseudouridine (Psi)	Pseudouridylate synthase 1 homolog
+RPUSD1	0	Noise	0.0	isomerase	pseudouridine (Psi)	RNA pseudouridylate synthase domain-containing protein 1
+TGS1	0	Noise	0.0	methyltransferase	RNA 5' cap/capping/decapping	Trimethylguanosine synthase
+THUMPD3	0	Noise	0.0		m2G/m2,2G (N2-methylguanosine)	tRNA (guanine(6)-N(2))-methyltransferase THUMP3
+TRMT2B	0	Noise	0.0	methyltransferase	m5U (5-methyluridine)	tRNA (uracil-5-)-methyltransferase homolog B
+TRMT61A	0	Noise	0.0	methyltransferase	m1G/m1A tRNA methylation	tRNA (adenine(58)-N(1))-methyltransferase catalytic subunit TRMT61A
+TRMU	0	Noise	0.0	sulfurtransferase	s2U / thiolated U	Mitochondrial tRNA-specific 2-thiouridylase 1
+TSR3	0	Noise	0.0	methyltransferase	acp3U / m1acp3-Psi	18S rRNA aminocarboxypropyltransferase
+WDR4	0	Noise	0.0		m7G (N7-methylguanosine)	tRNA (guanine-N(7)-)-methyltransferase non-catalytic subunit WDR4
+YBX1	0	Noise	0.0		m5C (5-methylcytosine)	Y-box-binding protein 1
+ALKBH8	1	Cluster 1	1.0	methyltransferase, hydroxylase	mcm5U/ncm5U wobble U	tRNA (carboxymethyluridine(34)-5-O)-methyltransferase ALKBH8
+CTU1	1	Cluster 1	1.0	thiolase	s2U / thiolated U	Cytoplasmic tRNA 2-thiolation protein 1
+ELP3	1	Cluster 1	1.0	acetyltransferase	mcm5U/ncm5U wobble U	Elongator complex protein 3
+HSD17B10	1	Cluster 1	1.0		RNA processing/modification-associated	3-hydroxyacyl-CoA dehydrogenase type-2
+MRM2	1	Cluster 1	1.0	methyltransferase	2'-O-methylation (Nm)	rRNA methyltransferase 2, mitochondrial
+NSUN4	1	Cluster 1	1.0	methyltransferase	m5C (5-methylcytosine)	5-cytosine rRNA methyltransferase NSUN4
+RPUSD3	1	Cluster 1	1.0	pseudouridine synthase	pseudouridine (Psi)	Mitochondrial mRNA pseudouridine synthase RPUSD3
+RPUSD4	1	Cluster 1	1.0	pseudouridine synthase	pseudouridine (Psi)	Pseudouridylate synthase RPUSD4, mitochondrial
+TFB1M	1	Cluster 1	1.0	methyltransferase	m6,2A / dimethyladenosine	Dimethyladenosine transferase 1, mitochondrial
+THG1L	1	Cluster 1	1.0	guanylyltransferase	tRNA(His) G-1 addition	Probable tRNA(His) guanylyltransferase
+TP53RK	1	Cluster 1	1.0		t6A/ms2t6A	EKC/KEOPS complex subunit TP53RK
+TRMT10C	1	Cluster 1	1.0	methyltransferase	m1G/m1A tRNA methylation	tRNA methyltransferase 10 homolog C
+TRMT5	1	Cluster 1	1.0	methyltransferase	m1G/m1A tRNA methylation	tRNA (guanine(37)-N(1))-methyltransferase
+URM1	1	Cluster 1	1.0		s2U / thiolated U	Ubiquitin-related modifier 1
+GEMIN4	1	Cluster 1	0.9714224431282045	triphosphatase, guanylyltransferase	RNA 5' cap/capping/decapping	mRNA-capping enzyme
+METTL1	1	Cluster 1	0.9453771747088118	methyltransferase	m7G (N7-methylguanosine)	tRNA (guanine-N(7)-)-methyltransferase
+ELP1	1	Cluster 1	0.916061386727514		mcm5U/ncm5U wobble U	Elongator complex protein 1
+NFS1	1	Cluster 1	0.911243720411372	desulfurase	s2U / thiolated U	Cysteine desulfurase
+ISCU	1	Cluster 1	0.905535925578161		s2U / thiolated U	Iron-sulfur cluster assembly enzyme ISCU
+DTWD1	1	Cluster 1	0.8956452743263907		acp3U / m1acp3-Psi	tRNA-uridine aminocarboxypropyltransferase 1
+FTSJ1	1	Cluster 1	0.8717786631242046	methyltransferase	2'-O-methylation (Nm)	tRNA (cytidine(32)/guanosine(34)-2'-O)-methyltransferase
+DDX21	2	Cluster 2	1.0		RNA processing/modification-associated	Nucleolar RNA helicase 2
+DIMT1	2	Cluster 2	1.0	methyltransferase	m6,2A / dimethyladenosine	Dimethyladenosine transferase
+DKC1	2	Cluster 2	1.0		pseudouridine (Psi)	H/ACA ribonucleoprotein complex subunit DKC1
+TRMT112	2	Cluster 2	1.0	methyltransferase	RNA methylation cofactor	Multifunctional methyltransferase subunit TRM112-like protein
+BUD23	2	Cluster 2	0.9121322691431555	methyltransferase	m7G (N7-methylguanosine)	18S rRNA (guanine-N(7))-methyltransferase
+MRM1	2	Cluster 2	0.9104581531440454	methyltransferase	2'-O-methylation (Nm)	rRNA methyltransferase 1, mitochondrial
+FBL	2	Cluster 2	0.893269755960602	methyltransferase	2'-O-methylation (Nm)	rRNA 2'-O-methyltransferase fibrillarin
+NOP58	2	Cluster 2	0.8855903435683247		2'-O-methylation (Nm)	Nucleolar protein 58
+EMG1	2	Cluster 2	0.8815927368089896	methyltransferase	acp3U / m1acp3-Psi	Ribosomal RNA small subunit methyltransferase NEP1
+NOP2	2	Cluster 2	0.8118669760509322		m5C (5-methylcytosine)	28S rRNA (cytosine(4447)-C(5))-methyltransferase
+THUMPD1	2	Cluster 2	0.8118669760509322		ac4C (N4-acetylcytidine)	THUMP domain-containing protein 1
+ADAT3	2	Cluster 2	0.8090194298806032	deaminase	A-to-I / inosine (I)	tRNA-specific adenosine-34 deaminase regulatory subunit ADAT3
+CMTR1	2	Cluster 2	0.7886880240944976	methyltransferase	RNA 5' cap/capping/decapping	Cap-specific mRNA (nucleoside-2'-O-)-methyltransferase 1
+RNMT	2	Cluster 2	0.7264223444344283	methyltransferase	RNA 5' cap/capping/decapping	mRNA cap guanine-N(7) methyltransferase
+TCOF1	2	Cluster 2	0.7264223444344283		RNA processing/modification-associated	Treacle protein
+NAT10	2	Cluster 2	0.7244818427450416	acetyltransferase	ac4C (N4-acetylcytidine)	RNA cytidine acetyltransferase
+METTL8	2	Cluster 2	0.5301765823496323	methyltransferase	m3C (N3-methylcytidine)	tRNA N(3)-cytidine methyltransferase METTL8, mitochondrial
+METTL14	3	Cluster 3	1.0	methyltransferase	m6A/m6Am (N6-methyladenosine)	N(6)-adenosine-methyltransferase non-catalytic subunit METTL14
+METTL3	3	Cluster 3	1.0	methyltransferase	m6A/m6Am (N6-methyladenosine)	N(6)-adenosine-methyltransferase catalytic subunit METTL3
+VIRMA	3	Cluster 3	1.0		m6A/m6Am (N6-methyladenosine)	Protein virilizer homolog
+WTAP	3	Cluster 3	1.0		m6A/m6Am (N6-methyladenosine)	Pre-mRNA-splicing regulator WTAP
+DCP2	4	Cluster 4	1.0	hydrolase	RNA 5' cap/capping/decapping	m7GpppN-mRNA hydrolase
+METTL16	4	Cluster 4	1.0	methyltransferase	m6A/m6Am (N6-methyladenosine)	RNA N(6)-adenosine-methyltransferase METTL16
+NSUN5	4	Cluster 4	1.0	methyltransferase	m5C (5-methylcytosine)	28S rRNA (cytosine-C(5))-methyltransferase
+TPRKB	4	Cluster 4	1.0		t6A/ms2t6A	EKC/KEOPS complex subunit TPRKB

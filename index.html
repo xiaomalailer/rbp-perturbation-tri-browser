@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactive RBP perturbation similarity browsers for K562 and HCT116, with CD4+ T-cell support planned.">
+  <title>RBP Perturbation Tri-Browser</title>
+  <style>
+    :root {
+      --ink:#132430;
+      --muted:#627581;
+      --paper:#eef2f4;
+      --panel:#ffffff;
+      --line:#d5dee4;
+      --accent:#087f86;
+      --accent-dark:#0f4650;
+      --future:#9aa8b0;
+    }
+    * { box-sizing:border-box; }
+    html, body { height:100%; margin:0; }
+    body {
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+      background:var(--paper);
+      color:var(--ink);
+      font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      flex:0 0 auto;
+      display:flex;
+      align-items:center;
+      gap:22px;
+      min-height:76px;
+      padding:10px 20px;
+      background:var(--panel);
+      border-bottom:1px solid var(--line);
+      box-shadow:0 2px 12px rgba(19,36,48,.07);
+      z-index:10;
+    }
+    .brand { min-width:270px; }
+    .brand h1 { margin:0 0 3px; font-size:19px; line-height:1.15; letter-spacing:-.01em; }
+    .brand p { margin:0; color:var(--muted); font-size:11px; }
+    nav { display:flex; align-items:center; gap:7px; }
+    .tab {
+      appearance:none;
+      border:1px solid var(--line);
+      border-radius:8px;
+      padding:9px 15px;
+      background:#f7f9fa;
+      color:#536773;
+      font:700 12px/1 inherit;
+      cursor:pointer;
+      transition:.15s ease;
+    }
+    .tab:hover { border-color:#9eb4bc; color:var(--accent-dark); }
+    .tab[aria-selected="true"] { background:var(--accent-dark); border-color:var(--accent-dark); color:#fff; }
+    .tab.future { border-style:dashed; color:#788991; }
+    .tab .soon { margin-left:5px; font-size:9px; font-weight:600; opacity:.78; }
+    .dataset-note { margin-left:auto; text-align:right; min-width:310px; }
+    .dataset-note strong { display:block; font-size:12px; }
+    .dataset-note span { display:block; margin-top:3px; color:var(--muted); font-size:10px; }
+    .external {
+      flex:0 0 auto;
+      color:var(--accent-dark);
+      border:1px solid var(--line);
+      border-radius:8px;
+      padding:8px 11px;
+      font-size:11px;
+      font-weight:700;
+      text-decoration:none;
+      background:#fff;
+    }
+    main { position:relative; flex:1 1 auto; min-height:0; }
+    iframe { width:100%; height:100%; border:0; display:block; background:#fff; }
+    #loading {
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:12px;
+      background:rgba(238,242,244,.94);
+      color:var(--accent-dark);
+      font-size:13px;
+      font-weight:700;
+      z-index:4;
+    }
+    .spinner { width:25px; height:25px; border:3px solid #cbd7dc; border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    #future-panel {
+      height:100%;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:30px;
+      background:linear-gradient(145deg,#eef3f4,#e4ecef);
+    }
+    .future-card {
+      width:min(590px,100%);
+      padding:38px;
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:#fff;
+      box-shadow:0 14px 38px rgba(19,36,48,.10);
+      text-align:center;
+    }
+    .future-card .eyebrow { color:var(--accent); font-size:11px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+    .future-card h2 { margin:11px 0 8px; font-size:28px; }
+    .future-card p { margin:0; color:var(--muted); font-size:14px; line-height:1.6; }
+    @media (max-width:900px) {
+      header { flex-wrap:wrap; gap:8px 12px; padding:9px 12px; }
+      .brand { min-width:0; flex:1 1 260px; }
+      nav { order:3; width:100%; }
+      .tab { flex:1; padding:9px 7px; }
+      .dataset-note { display:none; }
+      .external { margin-left:auto; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <h1>RBP Perturbation Tri-Browser</h1>
+      <p>Cross-cell-line perturbation similarity atlas</p>
+    </div>
+    <nav role="tablist" aria-label="Cell line">
+      <button class="tab" id="tab-k562" role="tab" aria-selected="true" data-view="k562">K562</button>
+      <button class="tab" id="tab-hct116" role="tab" aria-selected="false" data-view="hct116">HCT116</button>
+      <button class="tab future" id="tab-cd4t" role="tab" aria-selected="false" data-view="cd4t">CD4+ T cells <span class="soon">SOON</span></button>
+    </nav>
+    <div class="dataset-note" aria-live="polite">
+      <strong id="dataset-title">K562 · 1,376 RBP perturbations</strong>
+      <span id="dataset-method">2,319 author HVGs · self-target masked · cosine similarity</span>
+    </div>
+    <a class="external" id="external-link" href="k562/" target="_blank" rel="noopener">Open separately ↗</a>
+  </header>
+
+  <main>
+    <div id="loading"><span class="spinner"></span><span>Loading K562 browser…</span></div>
+    <iframe id="browser-frame" title="K562 RBP perturbation browser" src="k562/"></iframe>
+    <section id="future-panel" aria-labelledby="future-title">
+      <div class="future-card">
+        <div class="eyebrow">Planned third dataset</div>
+        <h2 id="future-title">CD4+ T-cell Browser</h2>
+        <p>The navigation slot and page structure are ready. The CD4+ T-cell perturbation dataset can be added without changing the K562 or HCT116 URLs.</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const datasets = {
+      k562: {
+        src:"k562/",
+        title:"K562 · 1,376 RBP perturbations",
+        method:"2,319 author HVGs · self-target masked · cosine similarity",
+        frameTitle:"K562 RBP perturbation browser"
+      },
+      hct116: {
+        src:"hct116/",
+        title:"HCT116 · 985 unique RBP perturbations",
+        method:"2,000 predefined HVGs · consensus DEGs > 5 · self-target masked · cosine similarity",
+        frameTitle:"HCT116 RBP perturbation browser"
+      },
+      cd4t: {
+        title:"CD4+ T cells · coming soon",
+        method:"Reserved for the third perturbation dataset"
+      }
+    };
+    const frame=document.getElementById("browser-frame");
+    const loading=document.getElementById("loading");
+    const future=document.getElementById("future-panel");
+    const external=document.getElementById("external-link");
+
+    function selectDataset(name, updateHash=true) {
+      if(!datasets[name]) name="k562";
+      const item=datasets[name];
+      document.querySelectorAll(".tab").forEach(tab=>tab.setAttribute("aria-selected",String(tab.dataset.view===name)));
+      document.getElementById("dataset-title").textContent=item.title;
+      document.getElementById("dataset-method").textContent=item.method;
+      if(name==="cd4t") {
+        frame.style.display="none";
+        loading.style.display="none";
+        future.style.display="flex";
+        external.style.display="none";
+      } else {
+        future.style.display="none";
+        frame.style.display="block";
+        external.style.display="inline-block";
+        external.href=item.src;
+        frame.title=item.frameTitle;
+        if(frame.getAttribute("src")!==item.src) {
+          loading.querySelector("span:last-child").textContent=`Loading ${name.toUpperCase()} browser…`;
+          loading.style.display="flex";
+          frame.src=item.src;
+        }
+      }
+      if(updateHash) history.replaceState(null,"",`#${name}`);
+    }
+    frame.addEventListener("load",()=>{ loading.style.display="none"; });
+    document.querySelectorAll(".tab").forEach(tab=>tab.addEventListener("click",()=>selectDataset(tab.dataset.view)));
+    window.addEventListener("hashchange",()=>selectDataset(location.hash.slice(1),false));
+    selectDataset(location.hash.slice(1)||"k562",false);
+  </script>
+</body>
+</html>

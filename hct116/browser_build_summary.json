@@ -1,0 +1,22 @@
+{
+  "browser_directory": "/home/kaiquan/HCT116_perturbseq/browser",
+  "RBP_count": 985,
+  "module_count": 12,
+  "unassigned_RBPs": 0,
+  "module_sizes": {
+    "1": 85,
+    "2": 52,
+    "3": 97,
+    "4": 30,
+    "5": 68,
+    "6": 54,
+    "7": 36,
+    "8": 111,
+    "9": 181,
+    "10": 72,
+    "11": 105,
+    "12": 94
+  },
+  "self_target_responses_masked": 19,
+  "payload_bytes": 7290406
+}

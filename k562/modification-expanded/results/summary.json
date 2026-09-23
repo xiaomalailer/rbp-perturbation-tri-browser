@@ -1,0 +1,24 @@
+{
+  "AD_gt5_all_gene_candidates": 3668,
+  "seed_genes": 65,
+  "seeds_with_at_least_one_partner": 46,
+  "seed_partner_links": 202,
+  "unique_partner_genes": 105,
+  "expanded_unique_genes": 170,
+  "minimum_partner_r": 0.3043622594414851,
+  "clusters": 9,
+  "noise": 35,
+  "cluster_sizes": {
+    "0": 35,
+    "1": 50,
+    "2": 31,
+    "3": 12,
+    "4": 11,
+    "5": 8,
+    "6": 7,
+    "7": 7,
+    "8": 5,
+    "9": 4
+  },
+  "silhouette_non_noise": 0.2932609730831183
+}

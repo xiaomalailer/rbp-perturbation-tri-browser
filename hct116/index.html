@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HCT116 RBP Cosine Similarity Browser</title>
+<script src="plotly-2.35.2.min.js" charset="utf-8"></script>
+<style>
+  :root{
+    --paper:#EAEEF1; --panel:#FFFFFF; --ink:#132430; --muted:#5C6E7B;
+    --line:#D5DEE4; --line-soft:#E7EDF1; --accent:#0B8C93; --accent-ink:#076a70;
+    --sel:#F0A21E; --sel-ink:#B4740A; --chip:#F1F5F7;
+    --pos:#B2182B; --neg:#2166AC; --radius:10px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:14px;line-height:1.45;}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+  header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:14px 22px;background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;}
+  .brand{display:flex;flex-direction:column;line-height:1.05}
+  .brand b{font-size:17px;font-weight:700;letter-spacing:-.01em}
+  .brand span{font-size:11px;color:var(--muted);font-family:"IBM Plex Mono";letter-spacing:.02em}
+  .spacer{flex:1}
+  .datatag{font-family:"IBM Plex Mono";font-size:11px;color:var(--muted);background:var(--chip);border:1px solid var(--line);border-radius:20px;padding:5px 11px;}
+  .datatag b{color:var(--accent-ink)}
+  .btn{font-family:"IBM Plex Sans";font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:8px 14px;border-radius:8px;cursor:pointer;transition:.12s;}
+  .btn:hover{border-color:var(--accent);color:var(--accent-ink)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{background:var(--accent-ink);color:#fff}
+  main{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(320px,1fr);gap:16px;padding:16px 22px 40px;max-width:1720px;margin:0 auto;align-items:start;}
+  @media(max-width:1080px){main{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;}
+  .phead{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line-soft);}
+  .phead h2{margin:0;font-size:13px;font-weight:700;letter-spacing:.02em;text-transform:uppercase}
+  .phead .hint{font-size:11px;color:var(--muted);margin-left:auto;font-family:"IBM Plex Mono"}
+  .pbody{padding:14px 16px}
+  .controls{display:flex;flex-wrap:wrap;gap:14px 18px;align-items:flex-end}
+  .field{display:flex;flex-direction:column;gap:5px;min-width:180px;flex:1}
+  .field label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  select,input[type=search]{font-family:"IBM Plex Mono";font-size:13px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;}
+  select:focus,input:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  .rangewrap{display:flex;align-items:center;gap:10px}
+  input[type=range]{flex:1;accent-color:var(--accent)}
+  .rangeval{font-family:"IBM Plex Mono";font-size:13px;min-width:36px;text-align:right;color:var(--accent-ink);font-weight:600}
+  .modechips{display:flex;gap:6px}
+  .mchip{font-size:12px;font-weight:600;padding:7px 12px;border-radius:7px;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--muted);}
+  .mchip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .modlist{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+  .modtag{font-family:"IBM Plex Mono";font-size:11px;padding:3px 8px;border-radius:20px;border:1px solid var(--line);cursor:pointer;display:flex;align-items:center;gap:6px;background:var(--panel);}
+  .modtag .dot{width:9px;height:9px;border-radius:50%}
+  .modtag.on{outline:2px solid var(--ink);outline-offset:1px}
+  #mainplot{width:100%;height:760px}
+  #subplot{width:100%;height:320px}
+  .placeholder{display:flex;align-items:center;justify-content:center;text-align:center;color:var(--muted);font-size:13px;height:200px;padding:20px;}
+  #related{display:flex;flex-direction:column;gap:2px}
+  .relrow{display:grid;grid-template-columns:96px 1fr 52px;align-items:center;gap:8px;padding:3px 2px;border-radius:6px;cursor:pointer}
+  .relrow:hover{background:var(--chip)}
+  .relname{font-family:"IBM Plex Mono";font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .barwrap{position:relative;height:14px;background:var(--line-soft);border-radius:3px}
+  .barwrap .zero{position:absolute;left:50%;top:-1px;bottom:-1px;width:1px;background:var(--line)}
+  .bar{position:absolute;top:0;bottom:0;border-radius:3px}
+  .relval{font-family:"IBM Plex Mono";font-size:12px;text-align:right;color:var(--muted)}
+  .subhead{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .selpill{font-family:"IBM Plex Mono";font-size:13px;font-weight:600;color:#fff;background:var(--sel-ink);padding:3px 10px;border-radius:20px;}
+  .modpill{font-family:"IBM Plex Mono";font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px;color:#fff;}
+  .muted{color:var(--muted)}
+  .footnote{font-size:11px;color:var(--muted);padding:0 22px 26px;max-width:1720px;margin:0 auto;font-family:"IBM Plex Mono"}
+  input[type=file]{display:none}
+  a{color:var(--accent-ink)}
+  .methodbar{max-width:1720px;margin:14px auto 0;padding:0 22px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+  .methoditem{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+  .methoditem b{display:block;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+  .methoditem span{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11px;color:var(--ink)}
+  @media(max-width:900px){.methodbar{grid-template-columns:1fr 1fr}}
+
+  /* ── 框选基因列表 ── */
+  #genelist-wrap{margin-top:10px;}
+  #genelist-head{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;display:flex;align-items:center;gap:10px;}
+  #genelist-head .gl-count{color:var(--accent-ink);font-family:"IBM Plex Mono";}
+  #genelist{display:flex;flex-wrap:wrap;gap:5px;max-height:160px;overflow-y:auto;padding:4px 0;}
+  .gtag{font-family:"IBM Plex Mono";font-size:11px;background:var(--chip);border:1px solid var(--line);border-radius:12px;padding:2px 9px;cursor:pointer;white-space:nowrap;}
+  .gtag:hover{background:var(--line);border-color:var(--accent)}
+  .gtag.has-info{border-color:var(--accent);box-shadow:inset 0 0 0 1px rgba(11,140,147,0.25)}
+  #genelist-actions{display:flex;gap:8px;margin-top:8px;}
+  .gl-empty{font-size:12px;color:var(--muted);font-style:italic;}
+
+  /* ── Ward 聚类树（上 + 左两棵，贴着热图，grid 对齐，不留空隙） ── */
+  #heatgrid{display:grid;grid-template-columns:130px 1fr;grid-template-rows:150px auto;gap:0;}
+  #dendro-corner{grid-area:1/1/2/2;}
+  #dendroplot{grid-area:1/2/2/3;width:100%;height:150px;}
+  #dendroplot-y{grid-area:2/1/3/2;width:100%;height:760px;}
+  #mainplot{grid-area:2/2/3/3;}
+  .dendro-missing{display:flex;align-items:center;justify-content:center;text-align:center;
+    color:var(--muted);font-size:12px;height:60px;background:var(--chip);
+    border:1px dashed var(--line);border-radius:8px;margin-bottom:8px;padding:0 16px;}
+
+  /* ── 框选/分支放大窗口 ── */
+  #zoomdendroplot{width:100%;height:150px;}
+  #zoomheatmap{width:100%;}
+
+  /* ── 新增：基因功能信息卡 ── */
+  #geneinfo-card{margin-top:10px;border:1px solid var(--line);border-radius:8px;background:var(--chip);padding:10px 12px;display:none;}
+  #geneinfo-card .gi-title{font-family:"IBM Plex Mono";font-size:12.5px;font-weight:700;color:var(--accent-ink);margin-bottom:4px;}
+  #geneinfo-card .gi-row{font-size:12px;line-height:1.5;margin-bottom:3px;}
+  #geneinfo-card .gi-row b{color:var(--muted);font-weight:600;margin-right:4px;}
+  #geneinfo-card .gi-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;}
+  #geneinfo-card .gi-badge{font-family:"IBM Plex Mono";font-size:10.5px;padding:2px 8px;border-radius:20px;background:#fff;border:1px solid var(--line);color:var(--muted);}
+  #geneinfo-card .gi-badge.mod{color:#fff;background:var(--sel-ink);border-color:var(--sel-ink);}
+  #geneinfo-card .gi-badge.trans{color:#fff;background:var(--accent);border-color:var(--accent);}
+  #geneinfo-card .gi-none{font-size:12px;color:var(--muted);font-style:italic;}
+  .relrow .relinfo{width:14px;height:14px;border-radius:50%;background:var(--accent);color:#fff;font-size:9px;font-weight:700;
+    display:none;align-items:center;justify-content:center;flex:0 0 auto;font-family:"IBM Plex Mono";}
+  .relrow.has-info .relinfo{display:inline-flex}
+  .relrow{grid-template-columns:96px 1fr 52px !important}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <b>HCT116 RBP Cosine Similarity Browser</b>
+    <span id="metrictag">self-target-masked cosine similarity · perturb-seq</span>
+  </div>
+  <div class="modechips" id="metricchips" style="display:none"></div>
+  <div class="spacer"></div>
+  <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);">
+    <span style="font-family:'IBM Plex Mono';font-size:11px;font-weight:600;">COLOR SCALE ±</span>
+    <input type="range" id="zlim" min="0.1" max="1.0" step="0.05" value="0.6"
+           style="width:110px;accent-color:var(--accent)">
+    <span id="zlimval" style="font-family:'IBM Plex Mono';font-size:12px;color:var(--accent-ink);font-weight:700;min-width:32px;">0.60</span>
+  </div>
+  <div class="datatag">HCT116 · <b>985 unique RBPs</b></div>
+  <button class="btn" onclick="document.getElementById('fileinput').click()">Load data…</button>
+  <input type="file" id="fileinput" accept=".js,.json,.csv,.tsv">
+  <button class="btn primary" id="resetbtn">Reset view</button>
+</header>
+
+<section class="methodbar" aria-label="Analysis summary">
+  <div class="methoditem"><b>Perturbations</b><span>consensus DEGs &gt; 5 · unique RBP</span></div>
+  <div class="methoditem"><b>Measured genes</b><span>2,000 predefined HVGs</span></div>
+  <div class="methoditem"><b>Similarity</b><span>self-target masked · cosine</span></div>
+  <div class="methoditem"><b>Hierarchy</b><span>Ward · Dynamic Tree Cut deepSplit=2</span></div>
+</section>
+
+<main>
+  <!-- LEFT: main heatmap -->
+  <section class="panel">
+    <div class="phead">
+      <h2>Integrated RBP map</h2>
+      <span class="hint" id="mainhint">click a cell → focus RBP · drag-select a block → gene list</span>
+    </div>
+    <div class="pbody">
+      <div class="controls">
+        <div class="field" style="max-width:130px;flex:0 0 auto">
+          <label>View</label>
+          <div class="modechips">
+            <div class="mchip on" data-mode="rbp" id="mode-rbp">RBP</div>
+            <div class="mchip" data-mode="module" id="mode-module">Module</div>
+          </div>
+        </div>
+        <div class="field" id="rbpfield">
+          <label>Choose an RBP</label>
+          <input type="search" id="rbpsearch" list="rbplist" placeholder="e.g. DDX21, EIF4G2…" autocomplete="off">
+          <datalist id="rbplist"></datalist>
+        </div>
+        <div class="field" id="modulefield" style="display:none">
+          <label>Choose a module</label>
+          <select id="moduleselect"></select>
+        </div>
+        <div class="field" style="max-width:220px">
+          <label>Related RBPs shown</label>
+          <div class="rangewrap">
+            <input type="range" id="topn" min="4" max="30" value="12">
+            <span class="rangeval" id="topnval">12</span>
+          </div>
+        </div>
+      </div>
+      <div class="modlist" id="modlist"></div>
+
+      <div id="dendro-missing" class="dendro-missing" style="display:none">
+        No dendrogram data in this file — re-export with export_for_browser_v4.py to see the clustering tree here.
+      </div>
+      <div id="heatgrid">
+        <div id="dendro-corner"></div>
+        <div id="dendroplot"></div>
+        <div id="dendroplot-y"></div>
+        <div id="mainplot"></div>
+      </div>
+
+      <!-- 框选基因列表区域 -->
+      <div id="genelist-wrap" style="display:none">
+        <div id="genelist-head">
+          Selected genes
+          <span class="gl-count" id="gl-count">0</span>
+          <span id="gl-range" style="font-family:'IBM Plex Mono';font-size:10px;color:var(--muted);"></span>
+        </div>
+        <div id="genelist"><span class="gl-empty">拖拽框选热图区域</span></div>
+        <div id="genelist-actions">
+          <button class="btn" id="gl-copy" style="font-size:11px;padding:4px 10px">Copy list</button>
+          <button class="btn" id="gl-py"   style="font-size:11px;padding:4px 10px">Copy as Python list</button>
+          <button class="btn" id="gl-clear" style="font-size:11px;padding:4px 10px;color:var(--muted)">Clear</button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- RIGHT: sub-heatmap + related -->
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <section class="panel">
+      <div class="phead">
+        <h2>Sub-heatmap</h2>
+        <span class="hint">focused set · values shown when ≤16</span>
+      </div>
+      <div class="pbody">
+        <div class="subhead" id="subhead"></div>
+        <!-- 新增：基因功能信息卡 -->
+        <div id="geneinfo-card"></div>
+        <div id="subplot"></div>
+        <div id="subplaceholder" class="placeholder">
+          Pick an RBP or a module to see its similarity block here.
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="phead">
+        <h2 id="reltitle">Related RBPs</h2>
+        <span class="hint"><button class="btn" style="padding:4px 10px;font-size:11px" id="csvbtn">Export CSV</button></span>
+      </div>
+      <div class="pbody">
+        <div id="related"></div>
+        <div id="relplaceholder" class="placeholder" style="height:auto;padding:26px 10px">
+          Ranked partners of the selected RBP appear here.
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- 框选 / 分支放大窗口 -->
+  <section class="panel" id="zoomsection" style="grid-column:1/-1;display:none">
+    <div class="phead">
+      <h2>Zoomed selection</h2>
+      <span class="hint" id="zoomhint">drag-select a block on the main map, or click a dendrogram branch</span>
+    </div>
+    <div class="pbody">
+      <div id="zoomdendro-wrap">
+        <div id="zoomdendroplot"></div>
+      </div>
+      <div id="zoomheatmap"></div>
+    </div>
+  </section>
+</main>
+
+<div class="footnote">
+  Auto-loads <b>rbp_data.js</b> from the same folder · works offline ·
+  drag-select the heatmap to list and zoom RBPs · click a dendrogram branch to inspect it ·
+  select an RBP for ranked cosine-similarity partners and perturbation metadata.
+</div>
+
+<script src="rbp_data.js" onerror="window.__noDataFile=true"></script>
+<script>
+/* ============================================================
+   State
+   ============================================================ */
+let ALL=null, curMetric=null, DATA=null, idxOf={};
+let GENEINFO={};   // 新增：{GENE_UPPER: {...功能字段}}，来自 payload.geneInfo
+let ZLIM = 0.6;
+let state={mode:"rbp", selected:null, module:null, topN:12, dendroSel:null, selRect:null};
+
+const MODULE_COLORS=["#0B8C93","#B2182B","#6A51A3","#238B45","#D97706","#2166AC",
+  "#C51B7D","#B58900","#08807A","#8C2D04","#4A4A4A","#1B7837","#762A83","#E08214",
+  "#35978F","#9E0142","#5E4FA2","#66A61E"];
+
+function getRDBU(){
+  return [
+    [0.0,"#2166AC"],[0.15,"#4393C3"],[0.3,"#92C5DE"],[0.45,"#D1E5F0"],
+    [0.5,"#F7F7F7"],[0.55,"#FDDBC7"],[0.7,"#F4A582"],[0.85,"#D6604D"],[1.0,"#B2182B"]
+  ];
+}
+
+/* ============================================================
+   基因功能信息 —— 查询 + 展示 helpers（新增）
+   ============================================================ */
+function geneInfo(lab){
+  if(!lab) return null;
+  return GENEINFO[lab.toUpperCase()] || null;
+}
+/* 一句话摘要，给 title="" 悬浮提示 / gene tag 用 */
+function geneInfoTooltip(lab){
+  const d=geneInfo(lab);
+  if(!d) return "";
+  const bits=[];
+  if(d.fullName) bits.push(d.fullName);
+  if(d.enzymeType||d.modification) bits.push([d.enzymeType,d.modification].filter(Boolean).join(" · "));
+  if(d.role) bits.push(d.role);
+  else if(d.proteinName) bits.push(d.proteinName);
+  if(d.consensusDegs!==undefined) bits.push(d.consensusDegs+" consensus DEGs");
+  if(d.perturbation) bits.push(d.perturbation);
+  return bits.join(" — ");
+}
+/* 信息卡：选中某个 RBP 时，在 sub-heatmap 上方展示完整信息 */
+function renderGeneInfoCard(lab){
+  const card=document.getElementById("geneinfo-card");
+  const d=geneInfo(lab);
+  if(!d){
+    card.style.display="none";
+    card.innerHTML="";
+    return;
+  }
+  const badges=[];
+  if(d.sourceMod) badges.push(`<span class="gi-badge mod">modification enzyme</span>`);
+  if(d.sourceTranslation) badges.push(`<span class="gi-badge trans">translation / stalling</span>`);
+  if(d.functionalTier) badges.push(`<span class="gi-badge">${d.functionalTier}</span>`);
+  if(d.enzymeType) badges.push(`<span class="gi-badge">${d.enzymeType}</span>`);
+  if(d.parentProcess) badges.push(`<span class="gi-badge">${d.parentProcess}</span>`);
+  if(d.subtheme) badges.push(`<span class="gi-badge">${d.subtheme}</span>`);
+  if(d.consensusDegs!==undefined) badges.push(`<span class="gi-badge">${d.consensusDegs} consensus DEGs</span>`);
+  badges.push(`<span class="gi-badge ${d.selfTargetMasked?'trans':''}">${d.selfTargetMasked?'self-target masked':'target not in HVGs'}</span>`);
+
+  const rows=[];
+  const title = d.fullName || d.proteinName || d.name || lab;
+  if(d.modification) rows.push(`<div class="gi-row"><b>Modification:</b>${d.modification}</div>`);
+  if(d.role) rows.push(`<div class="gi-row"><b>Role:</b>${d.role}</div>`);
+  if(d.proteinName && d.proteinName!==title) rows.push(`<div class="gi-row"><b>Protein:</b>${d.proteinName}</div>`);
+  if(d.complex) rows.push(`<div class="gi-row"><b>Complex:</b>${d.complex}</div>`);
+  if(d.alsoRelevantTo) rows.push(`<div class="gi-row"><b>Also relevant to:</b>${d.alsoRelevantTo}</div>`);
+  if(d.snippet) rows.push(`<div class="gi-row"><b>UniProt:</b>${d.snippet}</div>`);
+  if(d.uniprot) rows.push(`<div class="gi-row"><b>Accession:</b>${d.uniprot}</div>`);
+  if(d.perturbation) rows.push(`<div class="gi-row"><b>Perturbation:</b><span class="mono">${d.perturbation}</span></div>`);
+  if(d.targetCells!==undefined) rows.push(`<div class="gi-row"><b>Target cells:</b>${d.targetCells} &nbsp; <b>Sampled:</b>${d.sampledCells}</div>`);
+  if(d.selfTargetOriginalZscore!==null&&d.selfTargetOriginalZscore!==undefined) rows.push(`<div class="gi-row"><b>Masked self-target z-score:</b>${d.selfTargetOriginalZscore}</div>`);
+
+  card.innerHTML=`<div class="gi-title">${title}</div>
+    <div class="gi-badges">${badges.join("")}</div>
+    ${rows.join("")||'<div class="gi-none">No further detail on file.</div>'}`;
+  card.style.display="block";
+}
+
+/* ============================================================
+   色阶滑块
+   ============================================================ */
+document.getElementById("zlim").addEventListener("input", e=>{
+  ZLIM = +e.target.value;
+  document.getElementById("zlimval").textContent = ZLIM.toFixed(2);
+  if(DATA) drawMain();
+  if(state.selected) selectRBP(state.selected);
+  else if(state.module!=null) selectModule(state.module);
+});
+
+/* ============================================================
+   Demo data
+   ============================================================ */
+function buildDemo(){
+  const modules={
+    "rRNA/ribosome":["RPS3","RPS11","AATF","DDX21","DDX52","DDX51","DDX24","DDX55","WDR3","WDR43","UTP3","UTP18","SDAD1","GNL3","NOLC1","GRWD1","ABCF1","TBRG4","EIF3G","XRCC6","DDX3X","NPM1","SBDS"],
+    "miRNA/capping":["DROSHA","DGCR8","DDX6","NCBP2","CPSF6","EXOSC5","SRSF1","NIPBL","RBFOX2"],
+    "core spliceosome":["PRPF8","EFTUD2","SF3B1","SF3B4","BUD13","AQR","GPKOW","SMNDC1","U2AF1","U2AF2","PPIL4","GEMIN5","RBM22","SLTM"],
+    "hnRNP":["HNRNPA1","HNRNPC","HNRNPK","HNRNPL","HNRNPM","HNRNPU","HNRNPUL1","PTBP1","PCBP1","MATR3","SRSF7","TRA2A","TARDBP","FUS","EWSR1","TAF15"],
+    "histone/3'end":["SLBP","LSM11","CSTF2T"],
+    "mRNA stability":["PUM1","PUM2","IGF2BP1","IGF2BP2","LIN28B","FMR1","FXR1","FXR2","KHDRBS1","KHSRP","LARP4","LARP7","PABPC4","SERBP1","YBX3","ZC3H11A","ZC3H8","QKI","TIA1","ZNF800","ZNF622","ZRANB2","CPEB4"],
+    "RNA mod":["NSUN2","PUS1","FTO","METAP2","MTPAP","SUPV3L1","DHX30","FASTKD2","APOBEC3C"],
+    "misc":["WRN","HLTF","XRN2","UPF1","UCHL5","SSB","SND1","NONO","SAFB","SAFB2","AKAP1","AKAP8L","PHF6","ILF3","TROVE2","FAM120A","GTF2F1","EIF4G2","YWHAG","RBM15","AGGF1","DDX42","AARS"]
+  };
+  const labels=[],modId=[];let m=0;
+  for(const k of Object.keys(modules)){m++;for(const g of modules[k]){if(!labels.includes(g)){labels.push(g);modId.push(m);}}}
+  const modNames=Object.keys(modules);
+  let s=1337;const rnd=()=>{s=(s*1664525+1013904223)&0xffffffff;return((s>>>0)/4294967296);};
+  const randn=()=>{let u=0,v=0;while(!u)u=rnd();while(!v)v=rnd();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);};
+  const affin={"1,2":0.12,"1,7":0.10,"3,4":0.18,"4,6":0.06,"1,6":-0.16,"2,6":-0.10};
+  const n=labels.length;
+  const M=Array.from({length:n},()=>new Array(n).fill(0));
+  for(let i=0;i<n;i++){M[i][i]=1;
+    for(let j=i+1;j<n;j++){
+      let v;
+      if(modId[i]===modId[j]){v=0.34+randn()*0.13;}
+      else{const key=[modId[i],modId[j]].sort((a,b)=>a-b).join(",");v=(affin[key]||0)+randn()*0.055;}
+      v=Math.max(-0.7,Math.min(0.7,v));M[i][j]=v;M[j][i]=v;
+    }
+  }
+  return{metric:"pearson (demo)",labels,modules:modId,matrix:M,moduleNames:modNames};
+}
+
+/* ============================================================
+   Ingest
+   ============================================================ */
+function ingestPayload(payload, src){
+  ALL = payload&&payload.metrics ? payload : {
+    title:(payload&&payload.title)||src, metric_default:(payload&&payload.metric)||"similarity",
+    metrics:{[(payload&&payload.metric)||"similarity"]:payload}
+  };
+  GENEINFO = (payload && payload.geneInfo) ? payload.geneInfo : {};
+  // 统一大写 key，方便查询不区分大小写
+  const gi2={}; for(const k in GENEINFO) gi2[k.toUpperCase()]=GENEINFO[k];
+  GENEINFO=gi2;
+  const srcTag=document.getElementById("srctag");
+  if(srcTag)srcTag.textContent=src;
+  const names=Object.keys(ALL.metrics);
+  const chips=document.getElementById("metricchips");
+  if(names.length>1){
+    chips.style.display="flex";
+    chips.innerHTML=names.map((nm,i)=>`<div class="mchip ${i===0?'on':''}" data-metric="${nm}">${nm}</div>`).join("");
+    chips.querySelectorAll(".mchip").forEach(c=>c.onclick=()=>setMetric(c.dataset.metric));
+  }else chips.style.display="none";
+  curMetric=(ALL.metric_default&&ALL.metrics[ALL.metric_default])?ALL.metric_default:names[0];
+  setMetric(curMetric);
+}
+
+function setMetric(name){
+  curMetric=name;
+  document.querySelectorAll("#metricchips .mchip").forEach(c=>c.classList.toggle("on",c.dataset.metric===name));
+  const m=ALL.metrics[name];
+  DATA={metric:name,labels:m.labels,
+        modules:(m.modules&&m.modules.length)?m.modules:m.labels.map(()=>1),
+        matrix:m.matrix,moduleNames:m.moduleNames,dendrogram:m.dendrogram};
+  const uniq=[...new Set(DATA.modules)];
+  DATA._noModules=uniq.length<=1;
+  if(!DATA.moduleNames)DATA.moduleNames=uniq.sort((a,b)=>a-b).map(i=>"Module "+i);
+  idxOf={};DATA.labels.forEach((l,i)=>idxOf[l]=i);
+  state.selected=null;state.module=null;
+  document.getElementById("metrictag").textContent=name+" similarity · "+DATA.labels.length+" RBPs"+
+    (Object.keys(GENEINFO).length?` · ${Object.keys(GENEINFO).length} annotated`:"");
+  const modeMod=document.getElementById("mode-module"),modList=document.getElementById("modlist");
+  modeMod.style.display=DATA._noModules?"none":"";
+  modList.style.display=DATA._noModules?"none":"";
+  buildControls();drawMain();drawDendrogram();clearFocus();clearGeneList();
+}
+
+function parseCSV(text){
+  const rows=text.trim().split(/\r?\n/).map(r=>r.split(/[,\t]/));
+  const labels=rows[0].slice(1).map(s=>s.trim());
+  const matrix=rows.slice(1).map(r=>r.slice(1).map(Number));
+  return{metric:"loaded matrix",labels,modules:labels.map(()=>1),matrix};
+}
+document.getElementById("fileinput").addEventListener("change",e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const nm=f.name.toLowerCase();let payload;
+      if(nm.endsWith(".js")){(0,eval)(r.result);payload=window.RBP_DATA;}
+      else if(nm.endsWith(".json"))payload=JSON.parse(r.result);
+      else payload=parseCSV(r.result);
+      if(!payload)throw new Error("no data");
+      ingestPayload(payload,f.name);
+    }catch(err){alert("Could not read: "+err.message);}
+  };
+  r.readAsText(f);
+});
+
+/* ============================================================
+   Controls
+   ============================================================ */
+function buildControls(){
+  document.getElementById("rbplist").innerHTML=DATA.labels.map(l=>`<option value="${l}">`).join("");
+  const sel=document.getElementById("moduleselect");
+  const ids=[...new Set(DATA.modules)].sort((a,b)=>a-b);
+  sel.innerHTML=ids.map(i=>{
+    const nm=DATA.moduleNames[i-1]||("Module "+i);
+    const cnt=DATA.modules.filter(x=>x===i).length;
+    return`<option value="${i}">${i}. ${nm} (${cnt})</option>`;
+  }).join("");
+  const ml=document.getElementById("modlist");
+  ml.innerHTML=ids.map(i=>{
+    const c=MODULE_COLORS[(i-1)%MODULE_COLORS.length];
+    const nm=DATA.moduleNames[i-1]||("Module "+i);
+    return`<span class="modtag" data-mod="${i}"><span class="dot" style="background:${c}"></span>${i}. ${nm}</span>`;
+  }).join("");
+  ml.querySelectorAll(".modtag").forEach(t=>{
+    t.onclick=()=>{switchMode("module");selectModule(+t.dataset.mod);};
+  });
+}
+function switchMode(mode){
+  state.mode=mode;
+  document.getElementById("mode-rbp").classList.toggle("on",mode==="rbp");
+  document.getElementById("mode-module").classList.toggle("on",mode==="module");
+  document.getElementById("rbpfield").style.display=mode==="rbp"?"flex":"none";
+  document.getElementById("modulefield").style.display=mode==="module"?"flex":"none";
+}
+document.getElementById("mode-rbp").onclick=()=>{switchMode("rbp");if(state.selected)selectRBP(state.selected);};
+document.getElementById("mode-module").onclick=()=>{switchMode("module");selectModule(+document.getElementById("moduleselect").value);};
+document.getElementById("rbpsearch").addEventListener("change",e=>{
+  const v=e.target.value.trim();if(idxOf[v]!==undefined)selectRBP(v);
+});
+document.getElementById("moduleselect").addEventListener("change",e=>selectModule(+e.target.value));
+document.getElementById("topn").addEventListener("input",e=>{
+  state.topN=+e.target.value;
+  document.getElementById("topnval").textContent=state.topN;
+  if(state.mode==="rbp"&&state.selected)selectRBP(state.selected);
+});
+document.getElementById("resetbtn").onclick=()=>{clearFocus();clearGeneList();drawMain();};
+
+/* ============================================================
+   Main heatmap + 框选监听
+   ============================================================ */
+function drawMain(){
+  const t={
+    z:DATA.matrix,x:DATA.labels,y:DATA.labels,type:"heatmap",
+    colorscale:getRDBU(),zmin:-ZLIM,zmax:ZLIM,zmid:0,
+    xgap:0.3,ygap:0.3,
+    hovertemplate:"%{y} ↔ %{x}<br>cosine = %{z:.3f}<extra></extra>",
+    colorbar:{thickness:10,len:0.5,y:0.5,title:{text:"cosine",side:"right",font:{size:11}},
+              tickfont:{size:10,family:"IBM Plex Mono"}}
+  };
+  Plotly.react("mainplot",[t],mainLayout(),{displaylogo:false,responsive:true,
+    modeBarButtonsToRemove:["lasso2d","select2d","zoom2d","pan2d","zoomIn2d","zoomOut2d","autoScale2d","resetScale2d"]});
+  const gd=document.getElementById("mainplot");
+  gd.removeAllListeners&&gd.removeAllListeners("plotly_click");
+  gd.on("plotly_click",ev=>{
+    const lab=ev.points[0].y;
+    switchMode("rbp");
+    document.getElementById("rbpsearch").value=lab;
+    selectRBP(lab);
+    clearGeneList();
+  });
+  gd.removeAllListeners&&gd.removeAllListeners("plotly_selected");
+  gd.on("plotly_selected",ev=>{
+    if(!ev||!ev.range){clearGeneList();return;}
+    const n=DATA.labels.length;
+    const xr=ev.range.x, yr=ev.range.y;
+    const x0=Math.max(0,Math.round(Math.min(...xr))), x1=Math.min(n-1,Math.round(Math.max(...xr)));
+    const y0=Math.max(0,Math.round(Math.min(...yr))), y1=Math.min(n-1,Math.round(Math.max(...yr)));
+    if(x1<x0||y1<y0){clearGeneList();return;}
+    const rowIdx=[],colIdx=[];
+    for(let i=y0;i<=y1;i++)rowIdx.push(i);
+    for(let i=x0;i<=x1;i++)colIdx.push(i);
+    const idxSet=new Set([...rowIdx,...colIdx]);
+    const posArr=[...idxSet].sort((a,b)=>a-b);
+    const genes=posArr.map(i=>DATA.labels[i]);
+    state.selected=null;state.module=null;state.dendroSel=null;
+    state.selRect={x0:x0-0.5,x1:x1+0.5,y0:y0-0.5,y1:y1+0.5};
+    Plotly.relayout("mainplot",{selections:[],shapes:focusShapes()});
+    document.getElementById("mainhint").textContent=`selected block: ${x1-x0+1}×${y1-y0+1} cells`;
+    showGeneList(genes, genes.length+" genes in selected region");
+    showZoomWindow(rowIdx, colIdx, `drag-selected: ${rowIdx.length} rows × ${colIdx.length} cols (zoom of original)`);
+  });
+  gd.removeAllListeners&&gd.removeAllListeners("plotly_deselect");
+  gd.on("plotly_deselect",()=>{state.selRect=null;Plotly.relayout("mainplot",{selections:[],shapes:focusShapes()});clearGeneList();});
+}
+
+function mainLayout(){
+  const n=DATA.labels.length;
+  const fs=n>90?7:n>60?8:9;
+  return{
+    margin:{l:70,r:10,t:8,b:70},height:760,
+    dragmode:"select",
+    selectdirection:"any",
+    xaxis:{tickfont:{size:fs,family:"IBM Plex Mono"},tickangle:-90,showgrid:false,side:"bottom",constrain:"domain"},
+    yaxis:{tickfont:{size:fs,family:"IBM Plex Mono"},showgrid:false,autorange:"reversed",scaleanchor:"x",constrain:"domain"},
+    paper_bgcolor:"#fff",plot_bgcolor:"#fff",
+    shapes:focusShapes()
+  };
+}
+function focusShapes(){
+  const shapes=[];
+  if(state.mode==="rbp"&&state.selected){
+    const i=idxOf[state.selected];
+    const line={color:"#F0A21E",width:2};
+    shapes.push({type:"rect",xref:"x",yref:"y",x0:-0.5,x1:DATA.labels.length-0.5,y0:i-0.5,y1:i+0.5,line,fillcolor:"rgba(240,162,30,0.08)"});
+    shapes.push({type:"rect",xref:"x",yref:"y",y0:-0.5,y1:DATA.labels.length-0.5,x0:i-0.5,x1:i+0.5,line,fillcolor:"rgba(240,162,30,0.08)"});
+  }
+  if(state.mode==="module"&&state.module!=null){
+    const members=DATA.modules.map((mm,ii)=>mm===state.module?ii:-1).filter(ii=>ii>=0);
+    if(members.length){
+      const a=Math.min(...members)-0.5,b=Math.max(...members)+0.5;
+      const c=MODULE_COLORS[(state.module-1)%MODULE_COLORS.length];
+      shapes.push({type:"rect",xref:"x",yref:"y",x0:a,x1:b,y0:a,y1:b,line:{color:c,width:2.5}});
+    }
+  }
+  if(state.dendroSel&&state.dendroSel.length){
+    const a=Math.min(...state.dendroSel)-0.5,b=Math.max(...state.dendroSel)+0.5;
+    shapes.push({type:"rect",xref:"x",yref:"y",x0:a,x1:b,y0:a,y1:b,
+      line:{color:"#6A51A3",width:2.5,dash:"dot"},fillcolor:"rgba(106,81,163,0.06)"});
+  }
+  if(state.selRect){
+    const r=state.selRect;
+    shapes.push({type:"rect",xref:"x",yref:"y",x0:r.x0,x1:r.x1,y0:r.y0,y1:r.y1,
+      line:{color:"#F0A21E",width:2},fillcolor:"rgba(240,162,30,0.10)"});
+  }
+  return shapes;
+}
+
+/* ============================================================
+   Ward 聚类树（dendrogram）
+   ============================================================ */
+function drawDendrogram(){
+  const dd = DATA && DATA.dendrogram;
+  const missing = document.getElementById("dendro-missing");
+  const grid = document.getElementById("heatgrid");
+  if(!dd || !dd.length){
+    missing.style.display="flex";
+    grid.style.gridTemplateColumns="0px 1fr";
+    grid.style.gridTemplateRows="0px auto";
+    try{Plotly.purge("dendroplot");}catch(e){}
+    try{Plotly.purge("dendroplot-y");}catch(e){}
+    document.getElementById("dendroplot").style.display="none";
+    document.getElementById("dendroplot-y").style.display="none";
+    return;
+  }
+  missing.style.display="none";
+  grid.style.gridTemplateColumns="130px 1fr";
+  grid.style.gridTemplateRows="150px auto";
+  const div = document.getElementById("dendroplot");
+  div.style.display="block";
+  const n=DATA.labels.length;
+  const maxY=Math.max(0.0001,...dd.map(m=>m.y));
+
+  const lineTraces = dd.map(m=>({
+    x:[m.x_left,m.x_left,m.x_right,m.x_right],
+    y:[m.y_left,m.y,m.y,m.y_right],
+    mode:"lines",type:"scatter",line:{color:m.color||"#9AA7AE",width:1.4},
+    hoverinfo:"skip",showlegend:false
+  }));
+  const nodeX=dd.map(m=>m.x), nodeY=dd.map(m=>m.y);
+  const hitTrace={
+    x:nodeX,y:nodeY,mode:"markers",type:"scatter",
+    marker:{size:16,color:"rgba(0,0,0,0)"},
+    customdata:dd.map((m,i)=>i),
+    hovertemplate:"%{customdata}<extra></extra>",
+    showlegend:false,name:"nodes"
+  };
+  const dotTrace={
+    x:nodeX,y:nodeY,mode:"markers",type:"scatter",
+    marker:{size:5,color:dd.map(m=>m.color||"#5C6E7B"),line:{color:"#fff",width:1}},
+    hoverinfo:"skip",showlegend:false
+  };
+
+  const layout={
+    margin:{l:70,r:10,t:8,b:2},height:150,
+    xaxis:{range:[-0.5,n-0.5],showticklabels:false,showgrid:false,zeroline:false,fixedrange:true},
+    yaxis:{range:[0,maxY*1.05],showticklabels:true,tickfont:{size:9,family:"IBM Plex Mono"},title:{text:"dist",font:{size:9}},
+           showgrid:false,zeroline:false,fixedrange:true},
+    paper_bgcolor:"#fff",plot_bgcolor:"#fff",
+    hovermode:"closest",dragmode:false
+  };
+  Plotly.react("dendroplot",[...lineTraces,dotTrace,hitTrace],layout,
+    {displayModeBar:false,responsive:true});
+
+  const gd=document.getElementById("dendroplot");
+  gd.removeAllListeners&&gd.removeAllListeners("plotly_click");
+  gd.on("plotly_click",ev=>{
+    const pt=ev.points.find(p=>p.data.customdata&&p.data.customdata.length);
+    if(!pt)return;
+    const idx=pt.customdata;
+    selectDendroCluster(dd[idx].leaves);
+  });
+
+  drawDendrogramY();
+}
+
+function drawDendrogramY(){
+  const dd = DATA && DATA.dendrogram;
+  const div = document.getElementById("dendroplot-y");
+  if(!dd || !dd.length){
+    try{Plotly.purge("dendroplot-y");}catch(e){}
+    div.style.display="none";
+    return;
+  }
+  div.style.display="block";
+  const n=DATA.labels.length;
+  const maxY=Math.max(0.0001,...dd.map(m=>m.y));
+
+  const lineTraces = dd.map(m=>({
+    x:[m.y_left,m.y,m.y,m.y_right],
+    y:[m.x_left,m.x_left,m.x_right,m.x_right],
+    mode:"lines",type:"scatter",line:{color:m.color||"#9AA7AE",width:1.4},
+    hoverinfo:"skip",showlegend:false
+  }));
+  const nodeX=dd.map(m=>m.y), nodeY=dd.map(m=>m.x);
+  const hitTrace={
+    x:nodeX,y:nodeY,mode:"markers",type:"scatter",
+    marker:{size:16,color:"rgba(0,0,0,0)"},
+    customdata:dd.map((m,i)=>i),
+    hovertemplate:"%{customdata}<extra></extra>",
+    showlegend:false,name:"nodes"
+  };
+  const dotTrace={
+    x:nodeX,y:nodeY,mode:"markers",type:"scatter",
+    marker:{size:5,color:dd.map(m=>m.color||"#5C6E7B"),line:{color:"#fff",width:1}},
+    hoverinfo:"skip",showlegend:false
+  };
+
+  const layout={
+    margin:{l:6,r:4,t:8,b:70},height:760,
+    xaxis:{range:[maxY*1.05,0],showticklabels:false,showgrid:false,zeroline:false,fixedrange:true},
+    yaxis:{range:[n-0.5,-0.5],showticklabels:false,showgrid:false,zeroline:false,fixedrange:true},
+    paper_bgcolor:"#fff",plot_bgcolor:"#fff",
+    hovermode:"closest",dragmode:false
+  };
+  Plotly.react("dendroplot-y",[...lineTraces,dotTrace,hitTrace],layout,
+    {displayModeBar:false,responsive:true});
+
+  const gd=document.getElementById("dendroplot-y");
+  gd.removeAllListeners&&gd.removeAllListeners("plotly_click");
+  gd.on("plotly_click",ev=>{
+    const pt=ev.points.find(p=>p.data.customdata&&p.data.customdata.length);
+    if(!pt)return;
+    selectDendroCluster(dd[pt.customdata].leaves);
+  });
+}
+
+function selectDendroCluster(leafPositions){
+  if(!leafPositions||!leafPositions.length)return;
+  state.selected=null;state.module=null;state.selRect=null;
+  state.dendroSel=leafPositions.slice();
+  switchMode("rbp");
+  document.getElementById("rbpsearch").value="";
+  const genes=leafPositions.map(i=>DATA.labels[i]);
+  drawSub(leafPositions,null,null,`clicked branch · ${genes.length} genes`);
+  document.getElementById("geneinfo-card").style.display="none";
+  const scored=leafPositions.map(i=>{
+    let s=0,cnt=0;for(const j of leafPositions){if(j!==i){s+=DATA.matrix[i][j];cnt++;}}
+    return{lab:DATA.labels[i],v:cnt?s/cnt:0};
+  }).sort((a,b)=>b.v-a.v);
+  document.getElementById("relplaceholder").style.display="none";
+  document.getElementById("reltitle").textContent="Branch members";
+  document.getElementById("related").innerHTML=scored.map(o=>relRow(o.lab,o.v,"mean within-branch")).join("");
+  wireRelClicks();
+  state._relCSV=[["RBP","mean_within_branch_similarity"]].concat(scored.map(o=>[o.lab,o.v.toFixed(4)]));
+  Plotly.relayout("mainplot",{shapes:focusShapes()});
+  document.getElementById("mainhint").textContent=`dendrogram branch: ${genes.length} genes`;
+  showGeneList(genes,`${genes.length} genes from clicked branch`);
+  const sorted=leafPositions.slice().sort((a,b)=>a-b);
+  showZoomWindow(sorted, sorted, `dendrogram branch · ${genes.length} genes`);
+}
+
+/* ============================================================
+   框选 / 分支放大窗口
+   ============================================================ */
+function showZoomWindow(rowIdx, colIdx, hintText){
+  if(!rowIdx||!rowIdx.length||!colIdx||!colIdx.length){hideZoomWindow();return;}
+  document.getElementById("zoomsection").style.display="block";
+  document.getElementById("zoomhint").textContent=hintText||"";
+  const positions=[...new Set([...rowIdx,...colIdx])].sort((a,b)=>a-b);
+  drawZoomDendro(positions);
+  drawZoomHeatmap(rowIdx,colIdx);
+}
+function hideZoomWindow(){
+  const sec=document.getElementById("zoomsection");
+  if(sec)sec.style.display="none";
+  try{Plotly.purge("zoomheatmap");}catch(e){}
+  try{Plotly.purge("zoomdendroplot");}catch(e){}
+}
+function drawZoomHeatmap(rowIdx,colIdx){
+  const rlabs=rowIdx.map(i=>DATA.labels[i]);
+  const clabs=colIdx.map(i=>DATA.labels[i]);
+  const z=rowIdx.map(r=>colIdx.map(c=>DATA.matrix[r][c]));
+  const nr=rlabs.length,nc=clabs.length,maxN=Math.max(nr,nc);
+  const fs=maxN>40?7:maxN>25?8:maxN>14?9:11;
+  const t={z,x:clabs,y:rlabs,type:"heatmap",colorscale:getRDBU(),zmin:-ZLIM,zmax:ZLIM,zmid:0,
+    xgap:1,ygap:1,hovertemplate:"%{y} ↔ %{x}<br>%{z:.3f}<extra></extra>",showscale:false};
+  const annotations=[];
+  if(maxN<=26){
+    const afs=maxN>18?8:maxN>12?9:10;
+    for(let r=0;r<nr;r++)for(let c=0;c<nc;c++){
+      const v=z[r][c];
+      annotations.push({x:clabs[c],y:rlabs[r],text:v.toFixed(2),showarrow:false,xref:"x",yref:"y",
+        font:{size:afs,family:"IBM Plex Mono",color:Math.abs(v)/ZLIM>0.55?"#ffffff":"#132430"}});
+    }
+  }
+  const layout={margin:{l:82,r:8,t:6,b:82},
+    height:Math.max(340,Math.min(720,60+nr*(maxN<=26?28:18))),
+    xaxis:{tickfont:{size:fs,family:"IBM Plex Mono"},tickangle:-90,showgrid:false},
+    yaxis:{tickfont:{size:fs,family:"IBM Plex Mono"},showgrid:false,autorange:"reversed",scaleanchor:"x",constrain:"domain"},
+    paper_bgcolor:"#fff",plot_bgcolor:"#fff",annotations};
+  Plotly.react("zoomheatmap",[t],layout,{displaylogo:false,responsive:true,displayModeBar:false});
+  const gd=document.getElementById("zoomheatmap");
+  gd.removeAllListeners&&gd.removeAllListeners("plotly_click");
+  gd.on("plotly_click",ev=>{
+    const lab=ev.points[0].y;switchMode("rbp");
+    document.getElementById("rbpsearch").value=lab;selectRBP(lab);
+  });
+}
+function drawZoomDendro(positions){
+  const wrap=document.getElementById("zoomdendro-wrap");
+  const dd=DATA&&DATA.dendrogram;
+  if(!dd||!dd.length){wrap.style.display="none";try{Plotly.purge("zoomdendroplot");}catch(e){}return;}
+  wrap.style.display="block";
+  const lo=Math.min(...positions), hi=Math.max(...positions);
+  const sub=dd.filter(m=>Math.min(...m.leaves)>=lo && Math.max(...m.leaves)<=hi);
+  const lineTraces=sub.map(m=>({
+    x:[m.x_left,m.x_left,m.x_right,m.x_right],
+    y:[m.y_left,m.y,m.y,m.y_right],
+    mode:"lines",type:"scatter",line:{color:m.color||"#9AA7AE",width:1.6},
+    hoverinfo:"skip",showlegend:false
+  }));
+  const dotTrace={
+    x:sub.map(m=>m.x),y:sub.map(m=>m.y),mode:"markers",type:"scatter",
+    marker:{size:6,color:sub.map(m=>m.color||"#5C6E7B"),line:{color:"#fff",width:1}},
+    hoverinfo:"skip",showlegend:false
+  };
+  const tickvals=positions.slice().sort((a,b)=>a-b);
+  const maxY=sub.length?Math.max(...sub.map(m=>m.y)):Math.max(...dd.map(m=>m.y),0.0001);
+  const layout={
+    margin:{l:70,r:10,t:8,b:92},height:150,
+    xaxis:{range:[lo-0.5,hi+0.5],tickmode:"array",tickvals,ticktext:tickvals.map(i=>DATA.labels[i]),
+           tickangle:-90,tickfont:{size:9,family:"IBM Plex Mono"},showgrid:false,zeroline:false,fixedrange:true},
+    yaxis:{range:[0,maxY*1.08],showticklabels:true,tickfont:{size:9,family:"IBM Plex Mono"},title:{text:"dist",font:{size:9}},
+           showgrid:false,zeroline:false,fixedrange:true},
+    paper_bgcolor:"#fff",plot_bgcolor:"#fff",hovermode:false,dragmode:false
+  };
+  Plotly.react("zoomdendroplot",[...lineTraces,dotTrace],layout,{displayModeBar:false,responsive:true});
+}
+
+/* ============================================================
+   框选基因列表
+   ============================================================ */
+function showGeneList(genes, rangeHint){
+  const wrap=document.getElementById("genelist-wrap");
+  const list=document.getElementById("genelist");
+  document.getElementById("gl-count").textContent=genes.length;
+  document.getElementById("gl-range").textContent=rangeHint||"";
+  list.innerHTML=genes.length
+    ? genes.map(g=>{
+        const tip=geneInfoTooltip(g);
+        const cls=tip?"gtag has-info":"gtag";
+        const title=tip?tip.replace(/"/g,'&quot;'):"click to focus";
+        return `<span class="${cls}" title="${title}">${g}</span>`;
+      }).join("")
+    : `<span class="gl-empty">no genes in selection</span>`;
+  list.querySelectorAll(".gtag").forEach(el=>{
+    el.onclick=()=>{
+      switchMode("rbp");
+      document.getElementById("rbpsearch").value=el.textContent;
+      selectRBP(el.textContent);
+    };
+  });
+  wrap.style.display="block";
+  wrap._genes=genes;
+}
+function clearGeneList(){
+  document.getElementById("genelist-wrap").style.display="none";
+  document.getElementById("genelist").innerHTML=`<span class="gl-empty">拖拽框选热图区域</span>`;
+  document.getElementById("gl-count").textContent="0";
+  hideZoomWindow();
+}
+document.getElementById("gl-copy").onclick=()=>{
+  const genes=document.getElementById("genelist-wrap")._genes||[];
+  if(!genes.length)return;
+  navigator.clipboard.writeText(genes.join("\n")).then(()=>flash("gl-copy","Copied!"));
+};
+document.getElementById("gl-py").onclick=()=>{
+  const genes=document.getElementById("genelist-wrap")._genes||[];
+  if(!genes.length)return;
+  const txt="genes = [\n"+genes.map(g=>`    "${g}"`).join(",\n")+"\n]";
+  navigator.clipboard.writeText(txt).then(()=>flash("gl-py","Copied!"));
+};
+document.getElementById("gl-clear").onclick=()=>{
+  clearGeneList();
+  state.selRect=null;state.dendroSel=null;
+  Plotly.restyle("mainplot",{selectedpoints:[null]});
+  if(DATA)Plotly.relayout("mainplot",{shapes:focusShapes()});
+};
+function flash(id,msg){const b=document.getElementById(id);const t=b.textContent;b.textContent=msg;setTimeout(()=>b.textContent=t,1500);}
+
+/* ============================================================
+   RBP / Module selection
+   ============================================================ */
+function selectRBP(lab){
+  if(idxOf[lab]===undefined)return;
+  hideZoomWindow();
+  state.selected=lab;state.module=null;
+  const i=idxOf[lab];
+  const sims=DATA.matrix[i].map((v,j)=>({lab:DATA.labels[j],v,j})).filter(o=>o.j!==i);
+  sims.sort((a,b)=>b.v-a.v);
+  const top=sims.slice(0,state.topN);
+  const order=[i,...top.map(o=>o.j)];
+  drawSub(order,lab);drawRelated(lab,top);
+  renderGeneInfoCard(lab);
+  Plotly.relayout("mainplot",{shapes:focusShapes()});
+  document.getElementById("mainhint").textContent="focused on "+lab;
+}
+function selectModule(mid){
+  hideZoomWindow();
+  state.module=mid;state.selected=null;
+  document.getElementById("moduleselect").value=mid;
+  const members=DATA.modules.map((mm,ii)=>mm===mid?ii:-1).filter(ii=>ii>=0);
+  drawSub(members,null,mid);drawModuleRelated(mid,members);
+  document.getElementById("geneinfo-card").style.display="none";
+  Plotly.relayout("mainplot",{shapes:focusShapes()});
+  document.getElementById("mainhint").textContent="module "+mid+" highlighted";
+  const genes=members.map(i=>DATA.labels[i]);
+  showGeneList(genes,`Module ${mid} · ${genes.length} genes`);
+}
+
+/* ============================================================
+   Sub-heatmap
+   ============================================================ */
+function drawSub(order,selLab,modId,customTitle){
+  document.getElementById("subplaceholder").style.display="none";
+  const labs=order.map(i=>DATA.labels[i]);
+  const z=order.map(a=>order.map(b=>DATA.matrix[a][b]));
+  const n=labs.length,fs=n>22?8:n>14?9:11;
+  const head=document.getElementById("subhead");
+  if(customTitle){
+    head.innerHTML=`<span class="modpill mono" style="background:#6A51A3">TREE</span><span class="muted">${customTitle}</span>`;
+  }else if(selLab){
+    head.innerHTML=`<span class="selpill mono">${selLab}</span><span class="muted">+ ${n-1} most similar</span>`;
+  }else{
+    const c=MODULE_COLORS[(modId-1)%MODULE_COLORS.length];
+    const nm=DATA.moduleNames[modId-1]||("Module "+modId);
+    head.innerHTML=`<span class="modpill mono" style="background:${c}">M${modId}</span><span class="muted">${nm} · ${n} RBPs</span>`;
+  }
+  const t={z,x:labs,y:labs,type:"heatmap",colorscale:getRDBU(),zmin:-ZLIM,zmax:ZLIM,zmid:0,
+    xgap:1,ygap:1,hovertemplate:"%{y} ↔ %{x}<br>%{z:.3f}<extra></extra>",showscale:false};
+  const annotations=[];
+  if(n<=16){
+    const afs=n>12?8:n>9?9:10;
+    for(let r=0;r<n;r++)for(let c=0;c<n;c++){
+      const v=z[r][c];
+      annotations.push({x:labs[c],y:labs[r],text:v.toFixed(2),showarrow:false,xref:"x",yref:"y",
+        font:{size:afs,family:"IBM Plex Mono",color:Math.abs(v)/ZLIM>0.55?"#ffffff":"#132430"}});
+    }
+  }
+  const layout={margin:{l:78,r:8,t:6,b:78},
+    height:Math.max(300,Math.min(620,46+n*(n<=16?26:18))),
+    xaxis:{tickfont:{size:fs,family:"IBM Plex Mono"},tickangle:-90,showgrid:false},
+    yaxis:{tickfont:{size:fs,family:"IBM Plex Mono"},showgrid:false,autorange:"reversed",scaleanchor:"x",constrain:"domain"},
+    paper_bgcolor:"#fff",plot_bgcolor:"#fff",annotations};
+  Plotly.react("subplot",[t],layout,{displaylogo:false,responsive:true,
+    modeBarButtonsToRemove:["lasso2d","select2d","zoom2d","pan2d","autoScale2d"]});
+  const gd=document.getElementById("subplot");
+  gd.removeAllListeners&&gd.removeAllListeners("plotly_click");
+  gd.on("plotly_click",ev=>{
+    const lab=ev.points[0].y;switchMode("rbp");
+    document.getElementById("rbpsearch").value=lab;selectRBP(lab);
+  });
+}
+
+/* ============================================================
+   Related panel
+   ============================================================ */
+function drawRelated(lab,top){
+  document.getElementById("relplaceholder").style.display="none";
+  document.getElementById("reltitle").textContent="Related to "+lab;
+  document.getElementById("related").innerHTML=top.map(o=>relRow(o.lab,o.v)).join("");
+  wireRelClicks();
+  state._relCSV=[["RBP","similarity_to_"+lab]].concat(top.map(o=>[o.lab,o.v.toFixed(4)]));
+}
+function drawModuleRelated(mid,members){
+  document.getElementById("relplaceholder").style.display="none";
+  document.getElementById("reltitle").textContent="Module "+mid+" members";
+  const scored=members.map(i=>{
+    let s=0,cnt=0;for(const j of members){if(j!==i){s+=DATA.matrix[i][j];cnt++;}}
+    return{lab:DATA.labels[i],v:cnt?s/cnt:0};
+  }).sort((a,b)=>b.v-a.v);
+  document.getElementById("related").innerHTML=scored.map(o=>relRow(o.lab,o.v,"mean within-module")).join("");
+  wireRelClicks();
+  state._relCSV=[["RBP","mean_within_module_similarity"]].concat(scored.map(o=>[o.lab,o.v.toFixed(4)]));
+}
+function relRow(lab,v,titleAttr){
+  const pct=Math.min(100,Math.abs(v)/ZLIM*50);
+  const pos=v>=0,color=pos?"var(--pos)":"var(--neg)";
+  const side=pos?`left:50%;width:${pct}%`:`right:50%;width:${pct}%`;
+  const tip=geneInfoTooltip(lab);
+  const rowCls="relrow"+(tip?" has-info":"");
+  const rowTitle=(tip||titleAttr||"").replace(/"/g,'&quot;');
+  return`<div class="${rowCls}" data-lab="${lab}" title="${rowTitle}">
+    <span class="relname">${lab}</span>
+    <span class="barwrap"><span class="zero"></span><span class="bar" style="${side};background:${color}"></span></span>
+    <span class="relval">${v>=0?"+":""}${v.toFixed(2)}</span></div>`;
+}
+function wireRelClicks(){
+  document.querySelectorAll(".relrow").forEach(r=>{
+    r.onclick=()=>{switchMode("rbp");document.getElementById("rbpsearch").value=r.dataset.lab;selectRBP(r.dataset.lab);};
+  });
+}
+function clearFocus(){
+  state.selected=null;state.module=null;state.dendroSel=null;state.selRect=null;
+  document.getElementById("subplaceholder").style.display="flex";
+  document.getElementById("relplaceholder").style.display="flex";
+  document.getElementById("subhead").innerHTML="";
+  document.getElementById("geneinfo-card").style.display="none";
+  document.getElementById("related").innerHTML="";
+  document.getElementById("reltitle").textContent="Related RBPs";
+  document.getElementById("rbpsearch").value="";
+  document.getElementById("mainhint").textContent="click a cell → focus RBP · drag-select a block → gene list";
+  try{Plotly.purge("subplot");}catch(e){}
+  if(DATA)Plotly.relayout("mainplot",{shapes:[]});
+}
+document.getElementById("csvbtn").onclick=()=>{
+  if(!state._relCSV){alert("Select an RBP or module first.");return;}
+  const csv=state._relCSV.map(r=>r.join(",")).join("\n");
+  const blob=new Blob([csv],{type:"text/csv"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download=(state.selected||("module_"+state.module))+"_related.csv";a.click();
+};
+
+/* ============================================================
+   Boot
+   ============================================================ */
+(function boot(){
+  if(window.RBP_DATA){ingestPayload(window.RBP_DATA,window.RBP_DATA.title||"rbp_data.js");return;}
+  fetch("rbp_data.json").then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.json();})
+    .then(p=>ingestPayload(p,"rbp_data.json"))
+    .catch(err=>{
+      console.warn("No data file found — showing demo.",err.message);
+      const banner=document.createElement("div");
+      banner.style.cssText="position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:999;"+
+        "background:#132430;color:#fff;font-family:'IBM Plex Mono',monospace;font-size:12px;"+
+        "padding:10px 18px;border-radius:8px;max-width:540px;text-align:center;line-height:1.5";
+      banner.innerHTML="⚠ No rbp_data.js found — showing demo data<br>"+
+        "Put <b>rbp_data.js</b> (from export_for_browser_v4.py) in the same folder, then refresh.";
+      document.body.appendChild(banner);setTimeout(()=>banner.remove(),12000);
+      ingestPayload(buildDemo(),"demo dataset");
+    });
+})();
+</script>
+</body>
+</html>
