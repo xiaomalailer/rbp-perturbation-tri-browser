@@ -1,0 +1,29 @@
+{
+  "source_h5ad": "/home/kaiquan/CD4+ Tcells_perturbseq_analysis/GWCD4i.DE_stats.h5ad",
+  "volcano_x": "zscore after self-target masking",
+  "volcano_y": "adj_p_value",
+  "significant_rule": "adj_p_value < 0.1, split by zscore sign; self-target masked",
+  "conditions": {
+    "rest": {
+      "condition": "Rest",
+      "perturbations": 772,
+      "deepSplit_2_modules": 8,
+      "deepSplit_4_modules": 22,
+      "self_targets_masked_in_volcano": 668
+    },
+    "stim8hr": {
+      "condition": "Stim8hr",
+      "perturbations": 846,
+      "deepSplit_2_modules": 16,
+      "deepSplit_4_modules": 26,
+      "self_targets_masked_in_volcano": 720
+    },
+    "stim48hr": {
+      "condition": "Stim48hr",
+      "perturbations": 807,
+      "deepSplit_2_modules": 10,
+      "deepSplit_4_modules": 24,
+      "self_targets_masked_in_volcano": 705
+    }
+  }
+}

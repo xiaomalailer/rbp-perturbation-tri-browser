@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Interactive RBP perturbation similarity browsers for K562 and HCT116, with CD4+ T-cell support planned.">
+  <meta name="description" content="Interactive RBP perturbation similarity browsers for K562, HCT116, and three CD4+ T-cell conditions.">
   <title>RBP Perturbation Tri-Browser</title>
   <style>
     :root {
@@ -127,7 +127,7 @@
     <nav role="tablist" aria-label="Cell line">
       <button class="tab" id="tab-k562" role="tab" aria-selected="true" data-view="k562">K562</button>
       <button class="tab" id="tab-hct116" role="tab" aria-selected="false" data-view="hct116">HCT116</button>
-      <button class="tab future" id="tab-cd4t" role="tab" aria-selected="false" data-view="cd4t">CD4+ T cells <span class="soon">SOON</span></button>
+      <button class="tab" id="tab-cd4t" role="tab" aria-selected="false" data-view="cd4t">CD4+ T cells</button>
     </nav>
     <div class="dataset-note" aria-live="polite">
       <strong id="dataset-title">K562 · 1,376 RBP perturbations</strong>
@@ -163,8 +163,10 @@
         frameTitle:"HCT116 RBP perturbation browser"
       },
       cd4t: {
-        title:"CD4+ T cells · coming soon",
-        method:"Reserved for the third perturbation dataset"
+        src:"cd4/",
+        title:"CD4+ T cells · Rest 772 · Stim8hr 846 · Stim48hr 807",
+        method:"10,282 measured genes · n_downstream > 5 · z-score · self-target masked · cosine similarity",
+        frameTitle:"CD4+ T-cell RBP perturbation browser"
       }
     };
     const frame=document.getElementById("browser-frame");
@@ -178,7 +180,7 @@
       document.querySelectorAll(".tab").forEach(tab=>tab.setAttribute("aria-selected",String(tab.dataset.view===name)));
       document.getElementById("dataset-title").textContent=item.title;
       document.getElementById("dataset-method").textContent=item.method;
-      if(name==="cd4t") {
+      if(!item.src) {
         frame.style.display="none";
         loading.style.display="none";
         future.style.display="flex";
