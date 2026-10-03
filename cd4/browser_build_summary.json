@@ -25,5 +25,19 @@
       "deepSplit_4_modules": 24,
       "self_targets_masked_in_volcano": 705
     }
+  },
+  "functional_enrichment": {
+    "collection": "c5.go.bp.v2026.1.Hs.symbols.gmt",
+    "method": "one-sided hypergeometric over measured-gene background",
+    "gene_sets": "negative and positive adjusted-P-significant responses separately",
+    "adjusted_p_threshold": 0.1,
+    "go_bh_fdr_threshold": 0.05,
+    "go_terms_after_background_filter": 5716,
+    "background_unique_gene_symbols": 10282
+  },
+  "on_target_knockdown": {
+    "author_significance_field": "obs.ontarget_significant",
+    "log2_fold_change": "target-gene value from layers/log_fc before self masking",
+    "estimated_knockdown_pct": "100 * (1 - 2^log2FoldChange)"
   }
 }

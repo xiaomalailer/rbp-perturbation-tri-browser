@@ -81,15 +81,28 @@
   .detail-status{padding:30px;text-align:center;color:var(--muted)}
   .detail-summary{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
   .stat-chip{font-family:"IBM Plex Mono",monospace;font-size:11px;padding:5px 9px;border:1px solid var(--line);border-radius:16px;background:var(--chip)}
-  #volcanoplot{width:100%;height:560px}
+  .kd-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 16px}
+  @media(max-width:1050px){.kd-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:620px){.kd-summary{grid-template-columns:1fr}}
+  .kd-stat{position:relative;min-height:82px;padding:12px 14px;border:1px solid var(--line);border-radius:9px;background:linear-gradient(145deg,#fff,#F7FAFB);overflow:hidden}
+  .kd-stat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:#8CA0AA}
+  .kd-stat.pass::before{background:#17856F}.kd-stat.fail::before{background:#B76836}.kd-stat.na::before{background:#A8B3B8}
+  .kd-label{font-size:10px;font-weight:700;letter-spacing:.055em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .kd-value{font-family:"IBM Plex Mono",monospace;font-size:20px;font-weight:650;line-height:1.15;color:var(--ink)}
+  .kd-note{font-size:10px;color:var(--muted);margin-top:5px;line-height:1.35}
+  #volcanoplot{width:100%;height:620px;border:1px solid var(--line-soft);border-radius:9px;overflow:hidden;background:#fff}
+  #volcanoplot .modebar{top:2px!important;right:4px!important}
+  .go-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin:20px 0 8px}
+  .go-heading h3{font-size:14px;margin:0}.go-heading p{font-size:10px;color:var(--muted);margin:2px 0 0;text-align:right;max-width:620px}
   .go-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px}
   @media(max-width:900px){.go-grid{grid-template-columns:1fr}}
   .go-card{border:1px solid var(--line);border-radius:9px;padding:12px;overflow:hidden}
+  .go-card.negative{border-top:4px solid #2878B5}.go-card.positive{border-top:4px solid #D94B58}
   .go-card h3{font-size:13px;margin:0 0 10px}.go-table-wrap{overflow:auto;max-height:430px}
   .go-table{width:100%;border-collapse:collapse;font-size:11px}
   .go-table th,.go-table td{padding:6px 7px;border-bottom:1px solid var(--line-soft);text-align:left;vertical-align:top}
   .go-table th{position:sticky;top:0;background:#fff;color:var(--muted);text-transform:uppercase;font-size:9px;letter-spacing:.04em}
-  .go-term{min-width:220px}.go-empty{color:var(--muted);padding:24px 8px;text-align:center}
+  .go-term{min-width:220px}.go-hits{display:block;min-width:280px;line-height:1.45;color:#40535D}.go-hits b{color:var(--accent-ink);white-space:nowrap}.go-empty{color:var(--muted);padding:24px 8px;text-align:center}
 
   /* ── 框选基因列表 ── */
   #genelist-wrap{margin-top:10px;}
@@ -191,8 +204,9 @@
       <h2>Conditions and RBP Counts</h2>
       <p><b>Rest:</b> 772 · <b>Stim8hr:</b> 846 · <b>Stim48hr:</b> 807</p>
       <p><b>Tree cuts:</b> Dynamic Tree Cut deepSplit=2 and deepSplit=4 · minClusterSize=20</p>
-      <p><b>Volcano plot:</b> self-target-masked z-score versus adjusted p-value</p>
-      <p><b>Significant response:</b> adjusted p-value &lt; 0.1, split by z-score sign</p>
+      <p><b>Volcano plot:</b> self-target-masked z-score versus −log10 adjusted p-value</p>
+      <p><b>Functional enrichment:</b> separate negative/positive GO-BP · hypergeometric · BH FDR &lt; 0.05</p>
+      <p><b>On-target KD:</b> target log2FC-derived efficiency plus the author significance call</p>
     </article>
   </div>
 </section>
@@ -309,13 +323,28 @@
   <section class="panel" id="detailsection" style="grid-column:1/-1;display:none">
     <div class="phead">
       <h2 id="detailtitle">Perturbation detail</h2>
-      <span class="hint">volcano plot · adjusted P &lt; 0.1</span>
+      <span class="hint">volcano plot · GO-BP enrichment · on-target knockdown</span>
     </div>
     <div class="pbody">
       <div id="detailstatus" class="detail-status">Select an RBP to load its analysis.</div>
       <div id="detailcontent" style="display:none">
         <div class="detail-summary" id="detailsummary"></div>
+        <div class="kd-summary" id="knockdownsummary"></div>
         <div id="volcanoplot"></div>
+        <div class="go-heading">
+          <h3>GO Biological Process enrichment</h3>
+          <p>One-sided hypergeometric test against all measured genes; negative and positive significant responses tested separately; BH FDR &lt; 0.05.</p>
+        </div>
+        <div class="go-grid">
+          <div class="go-card negative">
+            <h3 id="negativegotitle">Negative response</h3>
+            <div id="negativego"></div>
+          </div>
+          <div class="go-card positive">
+            <h3 id="positivegotitle">Positive response</h3>
+            <div id="positivego"></div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -323,11 +352,11 @@
 
 <div class="footnote">
   Static public browser · three CD4+ T-cell conditions analyzed independently · all 10,282 measured genes ·
-  select any RBP to load its self-target-masked z-score / adjusted-p volcano plot ·
+  select any RBP to load its on-target KD metrics, response volcano plot and GO-BP enrichment ·
   drag-select heatmap → gene list + zoomed panel · colour scale adjustable in header.
 </div>
 
-<script src="rbp_data.js?v=cd4-three-condition-20260926" onerror="window.__noDataFile=true"></script>
+<script src="rbp_data.js?v=cd4-enrichment-kd-20261003" onerror="window.__noDataFile=true"></script>
 <script>
 /* ============================================================
    State
@@ -1096,36 +1125,92 @@ function hidePerturbationDetail(){
 function escapeHtml(value){
   return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
+function hitGenesCell(genes){
+  const shown=genes.slice(0,12),remaining=genes.length-shown.length,full=genes.join(", ");
+  return `<span class="go-hits" title="${escapeHtml(full)}">${shown.map(escapeHtml).join(", ")}${remaining>0?` <b>+${remaining} more</b>`:""}</span>`;
+}
 function goTable(rows){
   if(!rows||!rows.length)return '<div class="go-empty">No significant GO-BP terms (BH FDR &lt; 0.05).</div>';
   return `<div class="go-table-wrap"><table class="go-table"><thead><tr><th>GO-BP term</th><th>Overlap</th><th>Fold</th><th>BH FDR</th><th>Hit genes</th></tr></thead><tbody>${rows.map(r=>
-    `<tr><td class="go-term">${escapeHtml(r.label)}</td><td>${r.overlap}/${r.termSize}</td><td>${r.fold.toFixed(2)}</td><td>${Number(r.fdr).toExponential(2)}</td><td>${r.genes.map(escapeHtml).join(", ")}</td></tr>`
+    `<tr><td class="go-term">${escapeHtml(r.label)}</td><td>${r.overlap}/${r.termSize}</td><td>${r.fold.toFixed(2)}</td><td>${Number(r.fdr).toExponential(2)}</td><td>${hitGenesCell(r.genes)}</td></tr>`
   ).join("")}</tbody></table></div>`;
+}
+function finiteNumber(value){return value!==null&&value!==undefined&&Number.isFinite(Number(value));}
+function signed(value,digits=3){
+  if(!finiteNumber(value))return "not available";
+  const number=Number(value);return `${number>0?"+":""}${number.toFixed(digits)}`;
+}
+function pvalue(value){
+  if(!finiteNumber(value))return "not available";
+  const number=Number(value);return number===0?"< 1e−300":number.toExponential(2);
+}
+function knockdownCards(detail){
+  const kd=detail.knockdown||{},measured=kd.targetMeasured!==false;
+  const efficiency=finiteNumber(kd.estimatedKnockdownPct)?`${Number(kd.estimatedKnockdownPct).toFixed(1)}%`:"not available";
+  const call=kd.authorSignificant===true?"YES":(kd.authorSignificant===false?"NO":"not available");
+  const callClass=kd.authorSignificant===true?"pass":(kd.authorSignificant===false?"fail":"na");
+  const cards=[
+    {label:"Estimated self-KD",value:efficiency,note:"expression reduction · 100 × (1 − 2^log2FC)",cls:measured?callClass:"na"},
+    {label:"Significant self-KD",value:call,note:"author obs.ontarget_significant call",cls:callClass},
+    {label:"On-target log2FC / z",value:`${signed(kd.log2FoldChange,3)} / ${signed(kd.zScore,2)}`,note:measured?"unmasked target-gene effect":"target gene not measured",cls:measured?"":"na"},
+    {label:"On-target adjusted P",value:pvalue(kd.adjustedP),note:"target-gene adjusted p-value before masking",cls:measured?"":"na"}
+  ];
+  return cards.map(card=>`<div class="kd-stat ${card.cls}"><div class="kd-label">${card.label}</div><div class="kd-value">${card.value}</div><div class="kd-note">${card.note}</div></div>`).join("");
+}
+function quantile(values,q){
+  if(!values.length)return 0;
+  const sorted=[...values].sort((a,b)=>a-b),position=(sorted.length-1)*q,base=Math.floor(position),rest=position-base;
+  return sorted[base+1]===undefined?sorted[base]:sorted[base]+rest*(sorted[base+1]-sorted[base]);
+}
+function placeLabels(rows,side,yMax,xMax){
+  const selected=[...rows].sort((a,b)=>(b.displayY+.28*Math.abs(b.z))-(a.displayY+.28*Math.abs(a.z))).slice(0,5).sort((a,b)=>b.displayY-a.displayY);
+  if(!selected.length)return [];
+  const gap=Math.max(.42,yMax*.055),top=yMax*.94,bottom=Math.max(1.12,yMax*.16);
+  let placed=selected.map(row=>Object.assign({},row,{labelY:Math.min(row.displayY,top)}));
+  for(let i=1;i<placed.length;i++)placed[i].labelY=Math.min(placed[i].labelY,placed[i-1].labelY-gap);
+  if(placed[placed.length-1].labelY<bottom){
+    const shift=bottom-placed[placed.length-1].labelY;
+    placed=placed.map(row=>Object.assign(row,{labelY:row.labelY+shift}));
+  }
+  const labelX=side<0?-xMax*.93:xMax*.93;
+  return placed.map(row=>Object.assign(row,{labelX}));
 }
 function drawVolcano(detail){
   const genes=DETAIL_MANIFEST.genes;
+  const threshold=Number((DETAIL_MANIFEST.thresholds||{}).adjustedP||.1);
   const positiveP=detail.p.filter(v=>v>0&&Number.isFinite(v));
-  const floor=(positiveP.length?Math.min(...positiveP):1e-300)/10;
+  const floor=Math.max(1e-300,(positiveP.length?Math.min(...positiveP):1e-300)/10);
   const points=[[],[],[]];
   for(let i=0;i<genes.length;i++){
     const p=detail.p[i],z=detail.z[i];if(p==null||!Number.isFinite(z))continue;
-    const group=p<.1?(z<0?1:(z>0?2:0)):0;
-    points[group].push({gene:genes[i],z,p:Math.max(p,floor)});
+    const plotP=Math.max(p,floor),minusLogP=-Math.log10(plotP),group=p<threshold?(z<0?1:(z>0?2:0)):0;
+    points[group].push({gene:genes[i],z,p,minusLogP});
   }
+  const allRows=points.flat(),yValues=allRows.map(row=>row.minusLogP),absZ=allRows.map(row=>Math.abs(row.z));
+  const yMax=Math.max(3,Math.min(40,quantile(yValues,.997)+1.2));
+  const xMax=Math.max(2,quantile(absZ,.998)*1.14);
+  allRows.forEach(row=>row.displayY=Math.min(row.minusLogP,yMax));
   const names=["Not significant","Negative response","Positive response"];
   const colors=["#BCC5CA","#2878B5","#D94B58"];
   const traces=points.map((rows,i)=>({type:"scattergl",mode:"markers",name:`${names[i]} (n=${rows.length.toLocaleString()})`,
-    x:rows.map(r=>r.z),y:rows.map(r=>r.p),text:rows.map(r=>r.gene),marker:{color:colors[i],size:i?6:4,opacity:i?.72:.38},
-    hovertemplate:"<b>%{text}</b><br>z-score: %{x:.4f}<br>adjusted p: %{y:.3e}<extra></extra>"}));
-  const labelRows=[...points[1].sort((a,b)=>a.z-b.z).slice(0,8),...points[2].sort((a,b)=>b.z-a.z).slice(0,8)];
-  traces.push({type:"scatter",mode:"markers+text",showlegend:false,x:labelRows.map(r=>r.z),y:labelRows.map(r=>r.p),text:labelRows.map(r=>r.gene),
-    textposition:"top center",textfont:{size:9,color:"#132430"},marker:{size:5,color:"#132430"},hoverinfo:"skip"});
-  Plotly.react("volcanoplot",traces,{height:560,margin:{l:72,r:24,t:46,b:64},
-    title:{text:`Genes affected by ${escapeHtml(detail.gene)} perturbation · CD4+ T cells · ${escapeHtml(detail.condition)}`,font:{size:16}},
-    xaxis:{title:"Perturbation z-score",zeroline:true,zerolinecolor:"#73858E",gridcolor:"#E7EDF1"},
-    yaxis:{title:"Adjusted p-value",type:"log",autorange:"reversed",gridcolor:"#E7EDF1"},
-    legend:{orientation:"h",y:1.08,x:0},paper_bgcolor:"#fff",plot_bgcolor:"#fff",hovermode:"closest",
-    shapes:[{type:"line",xref:"paper",x0:0,x1:1,y0:.1,y1:.1,line:{color:"#475B66",dash:"dash",width:1}}]
+    x:rows.map(r=>r.z),y:rows.map(r=>r.displayY),text:rows.map(r=>r.gene),customdata:rows.map(r=>r.p),
+    marker:{color:colors[i],size:i?7:4,opacity:i?.76:.32,line:i?{color:"rgba(255,255,255,.65)",width:.45}:undefined},
+    hovertemplate:"<b>%{text}</b><br>z-score: %{x:.4f}<br>adjusted p: %{customdata:.3e}<br>−log10(p): %{y:.2f}<extra></extra>"}));
+  const negativeLabels=placeLabels(points[1],-1,yMax,xMax),positiveLabels=placeLabels(points[2],1,yMax,xMax);
+  for(const [rows,color,position] of [[negativeLabels,colors[1],"middle right"],[positiveLabels,colors[2],"middle left"]]){
+    if(!rows.length)continue;
+    const lineX=[],lineY=[];for(const row of rows){lineX.push(row.z,row.labelX,null);lineY.push(row.displayY,row.labelY,null);}
+    traces.push({type:"scatter",mode:"lines",showlegend:false,x:lineX,y:lineY,line:{color,width:1},hoverinfo:"skip"});
+    traces.push({type:"scatter",mode:"markers+text",showlegend:false,x:rows.map(r=>r.labelX),y:rows.map(r=>r.labelY),text:rows.map(r=>r.gene),
+      textposition:position,textfont:{size:10,color:"#132430",family:"IBM Plex Mono"},marker:{size:6,color,line:{color:"#fff",width:1}},cliponaxis:false,hoverinfo:"skip"});
+  }
+  Plotly.react("volcanoplot",traces,{height:620,margin:{l:78,r:38,t:92,b:70},
+    title:{text:`Response to <b>${escapeHtml(detail.gene)}</b> perturbation · ${escapeHtml(detail.condition)}`,x:.015,xanchor:"left",font:{size:18,color:"#132430"}},
+    xaxis:{title:"Perturbation z-score",range:[-xMax,xMax],zeroline:true,zerolinecolor:"#73858E",gridcolor:"#E7EDF1"},
+    yaxis:{title:"−log10 adjusted p-value",range:[0,yMax*1.02],gridcolor:"#E7EDF1",zeroline:false},
+    legend:{orientation:"h",y:1.075,x:0,xanchor:"left",font:{size:11}},paper_bgcolor:"#fff",plot_bgcolor:"#fff",hovermode:"closest",
+    shapes:[{type:"line",xref:"paper",x0:0,x1:1,y0:-Math.log10(threshold),y1:-Math.log10(threshold),line:{color:"#475B66",dash:"dash",width:1.3}}],
+    annotations:[{xref:"paper",x:1,yref:"y",y:-Math.log10(threshold),text:`adjusted P = ${threshold}`,showarrow:false,xanchor:"right",yshift:10,font:{size:10,color:"#475B66"}}]
   },{displaylogo:false,responsive:true,modeBarButtonsToRemove:["lasso2d","select2d"]});
 }
 async function loadPerturbationDetail(lab){
@@ -1134,13 +1219,19 @@ async function loadPerturbationDetail(lab){
   document.getElementById("detailtitle").textContent=`${lab} perturbation detail · ${DATA.metricName}`;
   const request=++detailRequest, conditionKey=curMetric;
   try{
-    if(!DETAIL_MANIFEST){const r=await fetch(`details/${conditionKey}/manifest.json`);if(!r.ok)throw new Error(`manifest HTTP ${r.status}`);DETAIL_MANIFEST=await r.json();}
-    const response=await fetch(`details/${conditionKey}/${encodeURIComponent(lab)}.json`);if(!response.ok)throw new Error(`HTTP ${response.status}`);
+    if(!DETAIL_MANIFEST){const r=await fetch(`details/${conditionKey}/manifest.json?v=cd4-enrichment-kd-20261003`);if(!r.ok)throw new Error(`manifest HTTP ${r.status}`);DETAIL_MANIFEST=await r.json();}
+    const response=await fetch(`details/${conditionKey}/${encodeURIComponent(lab)}.json?v=cd4-enrichment-kd-20261003`);if(!response.ok)throw new Error(`HTTP ${response.status}`);
     const detail=await response.json();if(request!==detailRequest||conditionKey!==curMetric)return;
     document.getElementById("detailsummary").innerHTML=[
       `DE count · ${detail.deCount.toLocaleString()}`,`matched genes · ${detail.counts.matched.toLocaleString()}`,
       `negative significant · ${detail.counts.negative.toLocaleString()}`,`positive significant · ${detail.counts.positive.toLocaleString()}`
     ].map(x=>`<span class="stat-chip">${x}</span>`).join("");
+    document.getElementById("knockdownsummary").innerHTML=knockdownCards(detail);
+    const negativeGO=(detail.go&&detail.go.negative)||[],positiveGO=(detail.go&&detail.go.positive)||[];
+    document.getElementById("negativegotitle").textContent=`Negative response · ${negativeGO.length} significant terms`;
+    document.getElementById("positivegotitle").textContent=`Positive response · ${positiveGO.length} significant terms`;
+    document.getElementById("negativego").innerHTML=goTable(negativeGO);
+    document.getElementById("positivego").innerHTML=goTable(positiveGO);
     drawVolcano(detail);status.style.display="none";content.style.display="block";
   }catch(error){if(request!==detailRequest)return;status.textContent=`Could not load ${lab} detail: ${error.message}`;}
 }
